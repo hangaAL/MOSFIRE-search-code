@@ -214,11 +214,22 @@ def createdfs(xlist, ylist, hit_type_list):
     df_neg (pandas dataframe): the dataframe containing the x and y coordinates of the negative hits
     '''
 
-    d = {"x": xlist, "y": ylist, "hit_type": hit_type_list} #make a dictionary first
-    df = pd.DataFrame(data=d) #turn the dictionary into a dataframe
-    df_pos = df[df["hit_type"]==1] #just the positive hits
-    df_neg = df[df["hit_type"]==-1] #just the negative hits
-    df_pos["cluster"] = np.nan #add a column for marking which cluster positive hits are in
+    df_pos = {"x": [], "y": []}
+    df_neg = {"x": [], "y": []}
+
+    for l in range(len(hit_type_list)):
+
+        if hit_type_list[l] == 1:
+
+            df_pos["x"].append(xlist[l])
+            df_pos["y"].append(ylist[l])
+        
+        if hit_type_list[l] == -1:
+
+            df_neg["x"].append(xlist[l])
+            df_neg["y"].append(ylist[l])
+
+    df_pos["cluster"] = [np.nan]*len(df_pos["x"])
 
     return df_pos, df_neg    
 
@@ -247,11 +258,11 @@ def findclusters(df_pos): #find clusters of positive hits
 
     clusternum = 1 #this number will be used to mark which hits are part of the same cluster
     
-    for n in df_pos.index: #iterates through the length of the positive dataframe
+    for n in range(len(df_pos["x"])): #iterates through the length of the positive dataframe
     
         if pd.isna(df_pos["cluster"][n]): #checks if the hit clusterless; if so,
 
-            for a in df_pos.index: #iterates through the dataframe again 
+            for a in range(len(df_pos["x"])): #iterates through the dataframe again 
 
                 if (df_pos["x"][a] < (df_pos["x"][n] + 15)) & (df_pos["x"][a] > (df_pos["x"][n] - 15)): # and within 20 pixels 
 
@@ -259,8 +270,8 @@ def findclusters(df_pos): #find clusters of positive hits
 
                         if pd.isna(df_pos["cluster"][a]): #makes sure the hit isn't already part of a cluster
 
-                            df_pos.loc[a,"cluster"] = clusternum #adds the hit to the cluster
-                            df_pos.loc[n, "cluster"] = clusternum #marks the original hit as part of a cluster
+                            df_pos["cluster"][a] = clusternum #adds the hit to the cluster
+                            df_pos["cluster"][n] = clusternum #marks the original hit as part of a cluster
 
         clusternum =  clusternum+1 #to make sure everything isn't marked as part of the same cluster
 
@@ -303,16 +314,16 @@ def findsandwiches(df_pos, df_neg, rgntxt, sandwiches): #finding sandwiched clus
     above = False #this variable records if there's negative hits above the cluster
     below = False #ditto but for below
 
-    for q in df_pos.index: #goes through the positive hits
+    for q in range(len(df_pos["cluster"])): #goes through the positive hits
     
         if df_pos["cluster"][q] not in done_clusters: #basically if it's a cluster we haven't done yet
 
             cn = df_pos["cluster"][q] #we record the cluster number
 
-            medx = df_pos[df_pos["cluster"]==cn]["x"].median() #and record the median x and y values of the hits in the cluster
-            medy = df_pos[df_pos["cluster"]==cn]["y"].median() #median because the mean would probably return a float and that's extra annoying steps :/
+            medx = dict_key_median(df_pos, "cluster", "x", cn) #and record the median x and y values of the hits in the cluster
+            medy = dict_key_median(df_pos, "cluster", "y", cn) #median because the mean would probably return a float and that's extra annoying steps :/
 
-            for t in df_neg.index: #now we go looking for the two pieces of bread in our galaxy sandwich
+            for t in range(len(df_neg["x"])): #now we go looking for the two pieces of bread in our galaxy sandwich
 
                 if (df_neg["x"][t] < (medx + 3)) & (df_neg["x"][t] > (medx - 3)): #make sure the hits are in the right x range first
 
@@ -580,3 +591,19 @@ def make_pos_hitlist(xlist, ylist, poslist, mainxlist, mainylist):
 
         mainxlist.append(xlist)
         mainylist.append(ylist)
+
+
+
+def dict_key_median(dic, class_key, value_key, cn):
+
+    list_for_med = []
+
+    for ee in range(len(dic[class_key])):
+
+        if dic[class_key][ee] == cn:
+
+            list_for_med.append(dic[value_key][ee])
+
+    med = np.median(list_for_med)
+
+    return med
