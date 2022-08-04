@@ -42,9 +42,10 @@ def SNsearch(pos_SN_thresh, neg_SN_thresh, pos_count_thresh, neg_count_thresh, d
 
     galaxies (integer list): where the amount of galaxies found in each file will be recorded
 
-    tarlist (integer list): where the amount of target galaxies found in each file will be recorded
+    tarlist (integer list): where the y-locations of target galaxies found in each file will be 
+    recorded
 
-    serlist (integer list): where the amount of serendipitous galaxies found in each file will 
+    serlist (integer list): where the y-locations of serendipitous galaxies found in each file will 
     be recorded
 
     cf_list (Boolean list): where whether or not each file had a continuum will be recorded
@@ -146,8 +147,8 @@ def SNsearch(pos_SN_thresh, neg_SN_thresh, pos_count_thresh, neg_count_thresh, d
 
             galaxies.append(0) #and record there being zero of all this stuff
             sandwiches.append(0)
-            tarlist.append(0)
-            serlist.append(0)
+            tarlist.append(None)
+            serlist.append(None)
             mainxlist.append(None)
             mainylist.append(None) 
             

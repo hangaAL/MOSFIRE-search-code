@@ -441,9 +441,9 @@ def count_galaxies(medylist, medxlist, targy, tarlist, serlist, mainxlist, mainy
 
     targy (integer): the expected y-pixel of the target galaxy
 
-    tarlist (integer list): where the amount of target galaxies found in each file will be recorded
+    tarlist (integer list): where the y-locations of target galaxies found in each file will be recorded
 
-    serlist (integer list): where the amount of serendipitous galaxies found in each file will 
+    serlist (integer list): where the y-locations of serendipitous galaxies found in each file will 
     be recorded
 
     mainxlist (integer list): where the x locations of either galaxies or positive S/N hits will
@@ -509,15 +509,28 @@ def count_galaxies(medylist, medxlist, targy, tarlist, serlist, mainxlist, mainy
 
             seren.append(r)
 
-    tarlist.append(len(targets)) #put the amount of each in the appropriate list
-    serlist.append(len(seren))
+    if len(targets) == 0: #if there's no detected galaxies, put null value in locations
+
+        tarlist.append(None)
+
+    if len(targets) != 0: #if there are, record their median y values
+        
+        tarlist.append(targets)
+    
+    if len(seren) == 0: #same but for serendipitous galaxies
+
+        serlist.append(None)
+    
+    if len(seren) != 0:
+
+        serlist.append(seren)
     
     if len(medxlist) == 0: #if there's no sandwiches, put null values for their x and y locations
 
         mainxlist.append(None)
         mainylist.append(None)
 
-    else: #otherwise record their x and y locations
+    if len(medxlist) != 0: #otherwise record their x and y locations
     
         mainxlist.append(medxlist)
         mainylist.append(medylist)
