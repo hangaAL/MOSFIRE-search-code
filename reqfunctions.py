@@ -190,8 +190,8 @@ def make_rgn_lists(comparray, rgntxt, xlist, ylist, hit_type_list, negSN, slitce
 def createdfs(xlist, ylist, hit_type_list): 
 
     '''
-    This function creates dataframes containing the x and y coordinates for each type of S/N hit in
-    an image for later use, with a column for recording hits that are parts of the same cluster for
+    This function creates dictionaries containing the x and y coordinates for each type of S/N hit in
+    an image for later use, with a key for recording hits that are parts of the same cluster for
     positive hits.
 
     -----
@@ -208,28 +208,28 @@ def createdfs(xlist, ylist, hit_type_list):
 
     Outputs:
 
-    df_pos (pandas dataframe): the dataframe containing the x and y coordinates of the positive hits, with
+    df_pos (dictionary): the dictionary containing the x and y coordinates of the positive hits, with
     a cloumn for cluster numbers
 
-    df_neg (pandas dataframe): the dataframe containing the x and y coordinates of the negative hits
+    df_neg (dictionary): the dictionary containing the x and y coordinates of the negative hits
     '''
 
-    df_pos = {"x": [], "y": []}
+    df_pos = {"x": [], "y": []} #make the empty dictionaries
     df_neg = {"x": [], "y": []}
 
-    for l in range(len(hit_type_list)):
+    for l in range(len(hit_type_list)): #go through the list of the types of each of the detected hits
 
-        if hit_type_list[l] == 1:
+        if hit_type_list[l] == 1: #if it's positive
 
-            df_pos["x"].append(xlist[l])
+            df_pos["x"].append(xlist[l]) #add its coordinates to the positive dictionary
             df_pos["y"].append(ylist[l])
         
-        if hit_type_list[l] == -1:
+        if hit_type_list[l] == -1: #ditto for the negative dictionary
 
             df_neg["x"].append(xlist[l])
             df_neg["y"].append(ylist[l])
 
-    df_pos["cluster"] = [np.nan]*len(df_pos["x"])
+    df_pos["cluster"] = [np.nan]*len(df_pos["x"]) #add the key for cluster identification to the positive dictionary, making sure it's filled with NaN values and of the same length as the other two keys
 
     return df_pos, df_neg    
 
@@ -238,7 +238,7 @@ def createdfs(xlist, ylist, hit_type_list):
 def findclusters(df_pos): #find clusters of positive hits
     
     '''
-    This function looks through the dataframe of positive hits and groups them into clusters based on their
+    This function looks through the dictionary of positive hits and groups them into clusters based on their
     locations relative to each other. Hits that are part of the same cluster are marked with the same
     cluster number. 
 
@@ -246,7 +246,7 @@ def findclusters(df_pos): #find clusters of positive hits
 
     Parameters:
 
-    df_pos (pandas dataframe): the dataframe containing the x and y coordinates of the positive hits, with
+    df_pos (dictionary): the dictionary containing the x and y coordinates of the positive hits, with
     a cloumn for cluster numbers
 
     ------
@@ -258,13 +258,13 @@ def findclusters(df_pos): #find clusters of positive hits
 
     clusternum = 1 #this number will be used to mark which hits are part of the same cluster
     
-    for n in range(len(df_pos["x"])): #iterates through the length of the positive dataframe
+    for n in range(len(df_pos["x"])): #iterates through the length of the positive dictionary's "x" key
     
-        if pd.isna(df_pos["cluster"][n]): #checks if the hit clusterless; if so,
+        if pd.isna(df_pos["cluster"][n]): #checks if the hit is clusterless; if so,
 
-            for a in range(len(df_pos["x"])): #iterates through the dataframe again 
+            for a in range(len(df_pos["x"])): #iterates through the dictionary again 
 
-                if (df_pos["x"][a] < (df_pos["x"][n] + 15)) & (df_pos["x"][a] > (df_pos["x"][n] - 15)): # and within 20 pixels 
+                if (df_pos["x"][a] < (df_pos["x"][n] + 15)) & (df_pos["x"][a] > (df_pos["x"][n] - 15)): # checks if the hit is within 20 pixels 
 
                      if (df_pos["y"][a] < (df_pos["y"][n] + 15)) & (df_pos["y"][a] > (df_pos["y"][n] - 15)): #both in x & y
 
@@ -289,10 +289,10 @@ def findsandwiches(df_pos, df_neg, rgntxt, sandwiches): #finding sandwiched clus
 
     Parameters:
 
-    df_pos (pandas dataframe): the dataframe containing the x and y coordinates and cluster numbers of 
+    df_pos (dictionary): the dataframe containing the x and y coordinates and cluster numbers of 
     the positive hits
 
-    df_neg (pandas dataframe): the dataframe containing the x and y coordinates of the negative hits
+    df_neg (dictionary): the dataframe containing the x and y coordinates of the negative hits
 
     rgntxt (open text file): the DS9 regions file that the locations of the hits and sandwiches are
     being recorded in
@@ -309,7 +309,7 @@ def findsandwiches(df_pos, df_neg, rgntxt, sandwiches): #finding sandwiched clus
     '''
 
     medylist = [] #this is where we'll store the y-locations of any sandwiches we find 
-    medxlist = []
+    medxlist = [] #ditto for x-locations
     done_clusters = [] #every time we check to see if a cluster is sandwiched, we put it in this list so we don't accidentally do it again 
     above = False #this variable records if there's negative hits above the cluster
     below = False #ditto but for below
@@ -339,7 +339,7 @@ def findsandwiches(df_pos, df_neg, rgntxt, sandwiches): #finding sandwiched clus
 
                 rgntxt.write("circle " + str(medx) + " " + str(medy) + " 20  # color=yellow \n") #we circle it in the regions file
                 medylist.append(int(medy)) #we record the y-locations of the sandwiches so we can cut out their data from the spectrum later
-                medxlist.append(int(medx))
+                medxlist.append(int(medx)) #ditto for x-locations
 
             done_clusters.append(cn) #then we put the cluster number there so we don't do the same cluster a million times
         
@@ -596,14 +596,39 @@ def make_pos_hitlist(xlist, ylist, poslist, mainxlist, mainylist):
 
 def dict_key_median(dic, class_key, value_key, cn):
 
-    list_for_med = []
+    '''
+    This function adds values from one key in a dictionary to a list based on the value in the
+    same position in another key in the same dictionary. It then takes the median of of the list.
+    This exists to replace what would've been a single line of code if I were working with 
+    dataframes and I will never stop being annoyed about that.
 
-    for ee in range(len(dic[class_key])):
+    -----
 
-        if dic[class_key][ee] == cn:
+    Parameters:
 
-            list_for_med.append(dic[value_key][ee])
+    dic (dictionary): the dictionary you want to work with
 
-    med = np.median(list_for_med)
+    class_key (string): the key you want to use as the filter/classifer for the other key
 
+    value_key (string): the key you will be drawing your actual values from to work with
+
+    cn (integer): the value you want the values in class_key to be equal to to count
+
+    -----
+
+    Outputs:
+
+    med (integer): the median of the selected values in value_key
+    '''
+
+    list_for_med = [] #this is where we will be putting the values from value_key that qualify
+
+    for ee in range(len(dic[class_key])): #iterate through the classifer key
+
+        if dic[class_key][ee] == cn: #if the value is equal to what we want
+
+            list_for_med.append(dic[value_key][ee]) #put the corresponding value in value_key into the list
+
+    med = int(np.median(list_for_med)) #take the median of the list
+    
     return med

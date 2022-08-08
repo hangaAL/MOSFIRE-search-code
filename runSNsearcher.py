@@ -90,5 +90,3 @@ def run_SNsearcher(dirfilepath, pos_SN_thresh, neg_SN_thresh, pos_count_thresh, 
         dic = {"File": fnames, "High S/N Detections": poslist, "x-values": mainxlist, "y-values": mainylist}
         dataf = pd.DataFrame(data=dic)
         dataf.to_csv(dirfilepath + "/detections.csv", sep=" ", index=False)
-
-#have which galaxies are target vs serendipitous specified in output
